@@ -158,13 +158,22 @@ const templateProduct = fs.readFileSync(`${__dirname}/templates/template-product
 
 const data = fs.readFileSync(`${__dirname}/dev-data/data.json`, 'utf-8');
 const dataObj = JSON.parse(data)
+// console.log('dataObj => ', dataObj);
 
 
 const server = http.createServer((req, res) => {
-  const pathName = req.url;
+  // console.log('req.url => ', req.url);
+  // console.log('url.parse(req.ul) => ', url.parse(req.url, true));
 
-  // OVERVIEW  page
-  if (pathName === '/' || pathName === '/overview') {
+  // On 'destructure' l'objet "url.parse(req.url, true)"
+  // On créer 2 variables avec les 2 noms de ses propriétés
+  const { query, pathname } = url.parse(req.url, true);
+  // console.log('query => ', query);
+
+  // **********************
+  // *** OVERVIEW  page ***
+  // **********************
+  if (pathname === '/' || pathname === '/overview') {
     // On charge le fichier "template-overview" au démarrage de l'application
     res.writeHead(200, { 'Content-Type': 'text/html' });
 
@@ -175,7 +184,7 @@ const server = http.createServer((req, res) => {
     // DONC : on boucle sur "dataObj" (qui contient tous les produits) et à chaque itérations, 
     // on remplace les placeholders dans le 'templateCard' avec le produit courant ('el')
     // NOTE : une fonction flêchée sans accolades retourne explicitement le résultat. C'est comme si on avait un "return" ici
-    // .JOIN = "cardsHTML" est un tableau. Pour avoir une chaîne de caractère, on utilise la fonction « join() »
+    // "cardsHTML" étant un tableau, pour avoir une chaîne de caractère, on utilise la fonction « join() »
     const cardsHtml =  dataObj.map(el => replaceTemplate(templateCard, el)).join('');
     // console.log('cardsHtml => ', cardsHtml);
 
@@ -183,16 +192,32 @@ const server = http.createServer((req, res) => {
     const output = templateOverview.replace('{%PRODUCT_CARD%}', cardsHtml);
     res.end(output);
 
-  // PRODUCT page
-  } else if (pathName === '/product') {
-    res.end('This is the PRODUCT');
 
-  // API  page
-  } else if (pathName === '/api') {
+  // **********************
+  // ***  PRODUCT page  ***
+  // **********************
+  } else if (pathname === '/product') {
+    // console.log(query);
+
+    // On récupère le produit que l'on veut afficher
+    const product = dataObj[query.id]
+    // console.log('dataObj.query => ', dataObj[query.id]);
+
+    res.writeHead(200, { 'Content-Type': 'text/html' });
+    const output = replaceTemplate(templateProduct, product)
+
+    res.end(output);
+
+  // **********************
+  // ***    API page    ***
+  // **********************
+  } else if (pathname === '/api') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(data);
 
-  // NOT FOUND page
+  // **********************
+  // **  NOT FOUND page  **
+  // **********************
   } else {
     res.writeHead(404, {
       'Content-type': 'text/html',
