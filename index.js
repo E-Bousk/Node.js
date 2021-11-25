@@ -121,31 +121,12 @@
 
 
 
-const fs = require('fs');
-const http = require('http');
-const url = require('url');
+const fs = require('fs');             // Core module
+const http = require('http');         // Core module
+const url = require('url');           // Core module
 
-
-
-// Fonction qui prends, dans un template, un produit
-const replaceTemplate = (template, product) => {
-  // console.log('template => ', template);
-  // console.log('product => ', product);
-  // On fait une REGEX avec « / » et « /g » (pour 'Global') pour remplacer TOUTES les occurences (sinon seule la 1ere est remplacée)
-  let output = template.replace(/{%PRODUCTNAME%}/g, product.productName);
-  output = output.replace(/{%IMAGE%}/g, product.image);
-  output = output.replace(/{%PRICE%}/g, product.price);
-  output = output.replace(/{%FROM%}/g, product.from);
-  output = output.replace(/{%NUTRIENTS%}/g, product.nutrients);
-  output = output.replace(/{%QUANTITY%}/g, product.quantity);
-  output = output.replace(/{%DESCRIPTION%}/g, product.description);
-  output = output.replace(/{%ID%}/g, product.id);
-
-  if(!product.organic) output = output.replace(/{%NOT_ORGANIC%}/g, 'not-organic');
-  
-  // console.log('output => ', output);
-  return output;
-}
+// On importe le module que l'on a créé (et exporté)
+const replaceTemplate = require('./modules/replaceTemplate')  // Custom module
 
 
 // ++ On charge les fichiers TEMPLATE au démarrage de l'application ++
