@@ -73,38 +73,126 @@
 //   console.log('Listening to requests on port 8000');
 // });
 
-// ************************************
-// *****   Creation d'un router   *****
-// ************************************
+// // ************************************
+// // *****   Creation d'un router   *****
+// // ************************************
+// const fs = require('fs');
+// const http = require('http');
+
+// // On utilise le build-in node module "url"
+// const url = require('url');
+
+
+// // On utilise la version synchrone car ce code n'est exécuté qu'une seule fois (au démarrage de l'appli)
+// // (donc on supprime la callback function. ++ voir commentaire plus bas ++)
+// const data = fs.readFileSync(`${__dirname}/dev-data/data.json`, 'utf-8');
+// const dataObj = JSON.parse(data)
+
+
+// const server = http.createServer((req, res) => {
+//   console.log('req.url => ', req.url);
+
+//   const pathName = req.url;
+//   if (pathName === '/' || pathName === '/overview') {
+//     res.end('This is the OVERVIEW');
+//   } else if (pathName === '/product') {
+//     res.end('This is the PRODUCT');
+//   } else if (pathName === '/api') {
+//     // ++ Cette partie de code commentée est déplacée en haut pour n'être exécuter qu'une seule fois (au démarrage de l'appli) ++
+//     // fs.readFile(`${__dirname}/dev-data/data.json`, 'utf-8', (err, data) => {
+//     //   const productData = JSON.parse(data)
+//     //   // console.log('productData => ', productData);
+//       res.writeHead(200, { 'Content-Type': 'application/json' });
+//       res.end(data);
+//     // });
+//   } else {
+//     res.writeHead(404, {
+//       'Content-type': 'text/html',
+//       'my-own-header': 'hello-world'
+//     });
+//     res.end('<h1>Page not found!</h1>');
+//   }
+// });
+
+// server.listen(8000, '127.0.0.1', () => {
+//   console.log('Listening to requests on port 8000');
+// });
+
+
+
+
 const fs = require('fs');
 const http = require('http');
-
-// On utilise le build-in node module "url"
 const url = require('url');
 
 
-// On utilise la version synchrone car ce code n'est exécuté qu'une seule fois (au démarrage de l'appli)
-// (donc on supprime la callback function. ++ voir commentaire plus bas ++)
+
+// Fonction qui prends, dans un template, un produit
+const replaceTemplate = (template, product) => {
+  // console.log('template => ', template);
+  // console.log('product => ', product);
+  // On fait une REGEX avec « / » et « /g » (pour 'Global') pour remplacer TOUTES les occurences (sinon seule la 1ere est remplacée)
+  let output = template.replace(/{%PRODUCTNAME%}/g, product.productName);
+  output = output.replace(/{%IMAGE%}/g, product.image);
+  output = output.replace(/{%PRICE%}/g, product.price);
+  output = output.replace(/{%FROM%}/g, product.from);
+  output = output.replace(/{%NUTRIENTS%}/g, product.nutrients);
+  output = output.replace(/{%QUANTITY%}/g, product.quantity);
+  output = output.replace(/{%DESCRIPTION%}/g, product.description);
+  output = output.replace(/{%ID%}/g, product.id);
+
+  if(!product.organic) output = output.replace(/{%NOT_ORGANIC%}/g, 'not-organic');
+  
+  // console.log('output => ', output);
+  return output;
+}
+
+
+// ++ On charge les fichiers TEMPLATE au démarrage de l'application ++
+// (on ne les charge qu'une seule fois, pas besoin de les charger à chaques appels)
+// en mode 'syncho' car on est au 'top level' du code
+const templateOverview = fs.readFileSync(`${__dirname}/templates/template-overview.html`, 'utf-8');
+const templateCard = fs.readFileSync(`${__dirname}/templates/template-card.html`, 'utf-8');
+const templateProduct = fs.readFileSync(`${__dirname}/templates/template-product.html`, 'utf-8');
+
+
 const data = fs.readFileSync(`${__dirname}/dev-data/data.json`, 'utf-8');
 const dataObj = JSON.parse(data)
 
 
 const server = http.createServer((req, res) => {
-  console.log('req.url => ', req.url);
-
   const pathName = req.url;
+
+  // OVERVIEW  page
   if (pathName === '/' || pathName === '/overview') {
-    res.end('This is the OVERVIEW');
+    // On charge le fichier "template-overview" au démarrage de l'application
+    res.writeHead(200, { 'Content-Type': 'text/html' });
+
+    // [La méthode map() crée un nouveau tableau avec les résultats de l'appel d'une fonction 
+    // fournie sur chaque élément du tableau appelant.]
+    // "replaceTemplate" va prendre, dans "templateCard", l'élément courant "el" (qui contient les données) 
+    // * cette fonction est crée en haut du code *
+    // DONC : on boucle sur "dataObj" (qui contient tous les produits) et à chaque itérations, 
+    // on remplace les placeholders dans le 'templateCard' avec le produit courant ('el')
+    // NOTE : une fonction flêchée sans accolades retourne explicitement le résultat. C'est comme si on avait un "return" ici
+    // .JOIN = "cardsHTML" est un tableau. Pour avoir une chaîne de caractère, on utilise la fonction « join() »
+    const cardsHtml =  dataObj.map(el => replaceTemplate(templateCard, el)).join('');
+    // console.log('cardsHtml => ', cardsHtml);
+
+    // On remplace maintenant le placeholder "{%PRODUCT_CARD%}" du fichier "template-overview" avec le string "cardsHtml"
+    const output = templateOverview.replace('{%PRODUCT_CARD%}', cardsHtml);
+    res.end(output);
+
+  // PRODUCT page
   } else if (pathName === '/product') {
     res.end('This is the PRODUCT');
+
+  // API  page
   } else if (pathName === '/api') {
-    // ++ Cette partie de code commentée est déplacée en haut pour n'être exécuter qu'une seule fois (au démarrage de l'appli) ++
-    // fs.readFile(`${__dirname}/dev-data/data.json`, 'utf-8', (err, data) => {
-    //   const productData = JSON.parse(data)
-    //   // console.log('productData => ', productData);
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(data);
-    // });
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(data);
+
+  // NOT FOUND page
   } else {
     res.writeHead(404, {
       'Content-type': 'text/html',
