@@ -25,7 +25,7 @@ const fs = require('fs');
 // ************************************
 // // 1er argument : le chemin du fichier, 2eme argument l'encodage des caractères, 3eme argument : une 'callback function'
 // // *** Comportement asynchrone : NODEJS commence à lire le fichier en background,
-// // et dès qu'il sera prêt, il démarrera la fonction (callback) spécifiée en 2d argument...
+// // et dès qu'il sera prêt, il démarrera la fonction (callback) spécifiée en 2nd argument...
 // // (cette 'callback function' a deux arguments : 1er = ERReur et 2nd = DATA)
 // fs.readFile('./txt/start.txt', 'utf-8', (err, data) => {
 //   console.log('data => ', data);
@@ -35,18 +35,39 @@ const fs = require('fs');
 // console.log('This console log will prompt before the previous one with data');
 
 
-fs.readFile('./txt/start.txt', 'utf-8', (err, data1) => {
-  if (err) return console.error('ERROR! 💥', err);
+// fs.readFile('./txt/start.txt', 'utf-8', (err, data1) => {
+//   if (err) return console.error('ERROR! 💥', err);
   
-  fs.readFile(`./txt/${data1}.txt`, 'utf-8', (err, data2) => {
-    console.log(data2);
-    fs.readFile('./txt/append.txt', 'utf-8', (err, data3) => {
-      console.log(data3);
+//   fs.readFile(`./txt/${data1}.txt`, 'utf-8', (err, data2) => {
+//     console.log(data2);
+//     fs.readFile('./txt/append.txt', 'utf-8', (err, data3) => {
+//       console.log(data3);
 
-      fs.writeFile('./txt/final.txt', `${data2}\n${data3}`, 'utf-8', err => {
-        console.log('File created 😎');
-      });
-    });
-  });
+//       fs.writeFile('./txt/final.txt', `${data2}\n${data3}`, 'utf-8', err => {
+//         console.log('File created 😎');
+//       });
+//     });
+//   });
+// });
+// console.log('Will read file!');
+
+
+// ************************************
+// *****  Creation d'un serveur   *****
+// ************************************
+//On inclus un autre module/package (appellé HTTP)
+const http = require('http');
+
+// On utilise la méthode "createServer" qui est dans l'objet "http"
+// À chaques requêtes sur le serveur, une 'callback function' sera appelée
+// cette 'callback function' a deux arguments : 1er REQuest et 2nd RESponse
+const server = http.createServer((req, res) => {
+  res.end('Hello 👋 from the server!');
 });
-console.log('Will read file!');
+
+// Méthode "listen" démarre le serveur et écoute les connections/requêtes
+// 1er paramètre : le port, 2ème : le host, 3eme optionel : une 'callback function' 
+// (qui sera exécutée dès que le serveur aura commencé à écouter)
+server.listen(8000, '127.0.0.1', () => {
+  console.log('Listening to requests on port 8000');
+});
