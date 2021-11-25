@@ -76,19 +76,35 @@
 // ************************************
 // *****   Creation d'un router   *****
 // ************************************
+const fs = require('fs');
 const http = require('http');
 
 // On utilise le build-in node module "url"
 const url = require('url');
 
+
+// On utilise la version synchrone car ce code n'est exécuté qu'une seule fois (au démarrage de l'appli)
+// (donc on supprime la callback function. ++ voir commentaire plus bas ++)
+const data = fs.readFileSync(`${__dirname}/dev-data/data.json`, 'utf-8');
+const dataObj = JSON.parse(data)
+
+
 const server = http.createServer((req, res) => {
   console.log('req.url => ', req.url);
 
   const pathName = req.url;
-  if(pathName === '/' || pathName === '/overview') {
+  if (pathName === '/' || pathName === '/overview') {
     res.end('This is the OVERVIEW');
   } else if (pathName === '/product') {
     res.end('This is the PRODUCT');
+  } else if (pathName === '/api') {
+    // ++ Cette partie de code commentée est déplacée en haut pour n'être exécuter qu'une seule fois (au démarrage de l'appli) ++
+    // fs.readFile(`${__dirname}/dev-data/data.json`, 'utf-8', (err, data) => {
+    //   const productData = JSON.parse(data)
+    //   // console.log('productData => ', productData);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(data);
+    // });
   } else {
     res.writeHead(404, {
       'Content-type': 'text/html',
