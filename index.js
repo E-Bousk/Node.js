@@ -125,8 +125,11 @@ const fs = require('fs');             // Core module
 const http = require('http');         // Core module
 const url = require('url');           // Core module
 
+// On récupère "SLUGIFY" dans une variable
+const slugify = require('slugify');   // Third-party module
+
 // On importe le module que l'on a créé (et exporté)
-const replaceTemplate = require('./modules/replaceTemplate')  // Custom module
+const replaceTemplate = require('./modules/replaceTemplate'); // Own module
 
 
 // ++ On charge les fichiers TEMPLATE au démarrage de l'application ++
@@ -138,9 +141,13 @@ const templateProduct = fs.readFileSync(`${__dirname}/templates/template-product
 
 
 const data = fs.readFileSync(`${__dirname}/dev-data/data.json`, 'utf-8');
-const dataObj = JSON.parse(data)
+const dataObj = JSON.parse(data);
 // console.log('dataObj => ', dataObj);
 
+// On crée un tableau avec tous les slugs
+// Pour chaque ELément du tableau, on 'slugify' le "productName" 
+const slugs = dataObj.map(el => slugify(el.productName, { lower: true }));
+// console.log('slugs => ', slugs);
 
 const server = http.createServer((req, res) => {
   // console.log('req.url => ', req.url);
