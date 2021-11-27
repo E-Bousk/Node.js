@@ -73,28 +73,74 @@ const superagent = require('superagent');
 // ** Faire qu'elles retournent des promesses au lieu que nous leur passions des callbacks **
 // ******************************************************************************************
 
-// On veut une fonction (lire in fichier) qui retourn une promesse
-// et qui ne reçoit qu'un nom de fichier (pas de callback)
-const readFilePromise = file => {
-  // on utilise le 'PromiseConstructor' (introduit depuis ES6)
-  // qui embarque une fonction "executor" qui est appellée dès que la promesse est crée
-  // cette fonction prend deux arguments ("resolve" et "reject") qui sont des fonctions
-  return new Promise((resolve, reject) => {
-    // C'est là qu'on appelle fs.readFile
-    fs.readFile(file, (err, data) => {
-      // En cas d'erreur on utilise la fonction "reject"
-      // Quoi que l'on passe dans cette méthode, sera l'erreur dispo dans la methode "catch()"
-      if (err) reject('I couldn\'t find that file ! 😢')
+// // On veut une fonction (lire in fichier) qui retourn une promesse
+// // et qui ne reçoit qu'un nom de fichier (pas de callback)
+// const readFilePromise = file => {
+//   // on utilise le 'PromiseConstructor' (introduit depuis ES6)
+//   // qui embarque une fonction "executor" qui est appellée dès que la promesse est crée
+//   // cette fonction prend deux arguments ("resolve" et "reject") qui sont des fonctions
+//   return new Promise((resolve, reject) => {
+//     // C'est là qu'on appelle fs.readFile
+//     fs.readFile(file, (err, data) => {
+//       // En cas d'erreur on utilise la fonction "reject"
+//       // Quoi que l'on passe dans cette méthode, sera l'erreur dispo dans la methode "catch()"
+//       if (err) reject('I couldn\'t find that file ! 😢')
 
-      // Ce "data" sera la valeur que la promesse nous retournera
-      // quelque soit la variable passée à la fonction "resolve",
-      // c'est ce qui sera disponible comme argument dans la méthode ".then()"
+//       // Ce "data" sera la valeur que la promesse nous retournera
+//       // quelque soit la variable passée à la fonction "resolve",
+//       // c'est ce qui sera disponible comme argument dans la méthode ".then()"
+//       resolve(data);
+//     })
+//   })
+// }
+
+// // Idem. On passe juste les données à écrire en plus
+// const writeFilePromise = (file, data) => {
+//   return new Promise((resolve, reject) => {
+//     fs.writeFile(file, data, err => {
+//       if (err) reject('Could not write file ! 😢')
+//       resolve('success');
+//     });
+//   });
+// };
+
+
+// // Afin d'enchaîner les méthodes ".then()",
+// // il faut retourner une promesse avant d'appeler la suivante
+// // "readFilePromise" retourne une promesse on peut donc chaîner une métgode ".then()" dessus
+// readFilePromise(`${__dirname}/dog.txt`)
+//   .then(data => {
+//     console.log(`The breed is (got from the file) : « ${data} »`);
+//     // Ici on "return" pour pouvoir chaîner le ".then()" suivant (retourne une promesse)
+//     return superagent.get(`https://dog.ceo/api/breed/${data}/images/random`);
+//   })
+//   .then(res => {
+//     console.log(res.body.message);
+//     // ce code retourne un promesse, on peut donc encore utilser un "then()" dessus
+//     return writeFilePromise('dog-img.txt', res.body.message)
+//   })
+//   .then(() => {
+//     console.log('Random dog image saved to file !');
+//   }) 
+//   // malgré plusieurs chaînage de promesse, à la fin on n'a besoin que d'un seul "catch"
+//   .catch(err => {
+//     console.error(err);
+//   });
+
+
+// ******************************************************************************************
+// ***********                           ASYNC / AWAIT                            ***********
+// ******************************************************************************************
+
+const readFilePromise = file => {
+  return new Promise((resolve, reject) => {
+    fs.readFile(file, (err, data) => {
+      if (err) reject('I couldn\'t find that file ! 😢')
       resolve(data);
     })
   })
 }
 
-// Idem. On passe juste les données à écrire en plus
 const writeFilePromise = (file, data) => {
   return new Promise((resolve, reject) => {
     fs.writeFile(file, data, err => {
@@ -104,25 +150,31 @@ const writeFilePromise = (file, data) => {
   });
 };
 
-
-// Afin d'enchaîner les méthodes ".then()",
-// il faut retourner une promesse avant d'appeler la suivante
-// "readFilePromise" retourne une promesse on peut donc chaîner une métgode ".then()" dessus
-readFilePromise(`${__dirname}/dog.txt`)
-  .then(data => {
+// On indique qu'elle est asynchrone
+// elle retourne automatiquement une promesse
+// dans une fonction "asunc" on peut avoir une ou plusieurs "await"
+const getDogPic = async () => {
+  // NOTE : on ne pourra pas attacher de "catch" pour la gestion d'erreur si on ne fait pas un "try" d'abord
+  try {
+    // On met le resultat dans une variable
+    // le "await" stop le code ici jusqu'à ce que la promesse soit résolue
+    // Si elle est "fulfilled" (succès), la valeur de l'expression await est celle de la promesse résolue
+    // cela correspond à « readFilePromise(`${__dirname}/dog.txt`).then(data => { console.log... »
+    const data = await readFilePromise(`${__dirname}/dog.txt`);
     console.log(`The breed is (got from the file) : « ${data} »`);
-    // Ici on "return" pour pouvoir chaîner le ".then()" suivant (retourne une promesse)
-    return superagent.get(`https://dog.ceo/api/breed/${data}/images/random`);
-  })
-  .then(res => {
+  
+    // idem
+    const res = await superagent.get(`https://dog.ceo/api/breed/${data}/images/random`);
     console.log(res.body.message);
-    // ce code retourne un promesse, on peut donc encore utilser un "then()" dessus
-    return writeFilePromise('dog-img.txt', res.body.message)
-  })
-  .then(() => {
+  
+    // idem
+    // Pas besoin de variable, car on a pas de valeur significative à resoudre
+    await writeFilePromise('dog-img.txt', res.body.message);
     console.log('Random dog image saved to file !');
-  }) 
-  // malgré plusieurs chaînage de promesse, à la fin on n'a besoin que d'un seul "catch"
-  .catch(err => {
+    
+  } catch (err) {
     console.error(err);
-  });
+  }
+};
+
+getDogPic();
