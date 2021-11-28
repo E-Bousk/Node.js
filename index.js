@@ -152,29 +152,269 @@ const writeFilePromise = (file, data) => {
 
 // On indique qu'elle est asynchrone
 // elle retourne automatiquement une promesse
-// dans une fonction "asunc" on peut avoir une ou plusieurs "await"
+// dans une fonction "async" on peut avoir une ou plusieurs "await"
+// const getDogPic = async () => {
+//   // NOTE : on ne pourra pas attacher de "catch" pour la gestion d'erreur si on ne fait pas un "try" d'abord
+//   try {
+//     // On met le resultat dans une variable
+//     // le "await" stop le code ici jusqu'à ce que la promesse soit résolue
+//     // Si elle est "fulfilled" (succès), la valeur de l'expression await est celle de la promesse résolue
+//     // cela correspond à « readFilePromise(`${__dirname}/dog.txt`).then(data => { console.log... »
+//     const data = await readFilePromise(`${__dirname}/dog.txt`);
+//     console.log(`The breed is (got from the file) : « ${data} »`);
+  
+//     // idem
+//     const res = await superagent.get(`https://dog.ceo/api/breed/${data}/images/random`);
+//     console.log(res.body.message);
+  
+//     // idem
+//     // Pas besoin de variable, car on a pas de valeur significative à resoudre
+//     await writeFilePromise('dog-img.txt', res.body.message);
+//     console.log('Random dog image saved to file !');
+//   }
+//   catch (err) {
+//     console.error(err);
+//     throw err;
+//   }
+// };
+// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//                                      *******************
+//                                      *** 1er exemple ***
+//                                      *******************
+// const getDogPic = async () => {
+//   try {
+//     const data = await readFilePromise(`${__dirname}/dog.txt`);
+//     console.log(`The breed is (got from the file) : « ${data} »`);
+  
+//     const res = await superagent.get(`https://dog.ceo/api/breed/${data}/images/random`);
+//     console.log(res.body.message);
+  
+//     await writeFilePromise('dog-img.txt', res.body.message);
+//     console.log('Random dog image saved to file !');
+//   }
+//   catch (err) {
+//     console.error(err);
+//     throw err;
+//   }
+// };
+
+// console.log('1: Will get 🐶 pics !');             // affiché en 1er
+// getDogPic();                                      // affiché en dernier : demarre mais comme en asynchrone, continue le code avant afficher les logs contenus dans la fonction
+// console.log('2: Done getting dog pics 👀 !');    // affiché donc en 2eme
+
+// ***********************
+// ** Donne ce resultat **
+// ***********************
+// 1: Will get 🐶 pics !
+// 2: Done getting dog pics 👀 !
+// The breed is (got from the file) : « labrador »
+// https://images.dog.ceo/breeds/labrador/n02099712_1660.jpg
+// Random dog image saved to file !
+// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//                                      ********************
+//                                      *** 2eme exemple ***
+//                                      ********************
+// const getDogPic = async () => {
+//   try {
+//     const data = await readFilePromise(`${__dirname}/dog.txt`);
+//     console.log(`The breed is (got from the file) : « ${data} »`);
+  
+//     const res = await superagent.get(`https://dog.ceo/api/breed/${data}/images/random`);
+//     console.log(res.body.message);
+  
+//     await writeFilePromise('dog-img.txt', res.body.message);
+//     console.log('Random dog image saved to file !');
+//   }
+//   catch (err) {
+//     console.error(err);
+//     throw err;
+//   }
+//   return '2: READY 🐕'
+// };
+
+// console.log('1: Will get 🐶 pics !');             // affiché en 1er
+// const x = getDogPic();                            // affiché en dernier : demarre mais comme en asynchrone, continue le code avant afficher les logs contenus dans la fonction
+// console.log('x => ', x);                          // affiché en 2eme = PROMISE PENDING : JS ne sait pas encore que c'est "2: READY 🐕" qu'il doit afficher car la fonction n'est pas encore finie
+// console.log('3: Done getting dog pics 👀 !');    // affiché en 3eme    
+
+// ***********************
+// ** Donne ce resultat **
+// ***********************
+// 1: Will get 🐶 pics !
+// x =>  Promise { <pending> }        // Donc si on veut afficher le "2: READY 🐕", il faut le traiter comme une promsesse avec ".then" ou avec "async/await"
+// 3: Done getting dog pics 👀 !
+// The breed is (got from the file) : « labrador »
+// https://images.dog.ceo/breeds/labrador/n02099712_5965.jpg
+// Random dog image saved to file !
+// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//                                      ********************
+//                                      *** 3eme exemple ***
+//                                      ********************
+// const getDogPic = async () => {
+//   try {
+//     const data = await readFilePromise(`${__dirname}/dog.txt`);
+//     console.log(`The breed is (got from the file) : « ${data} »`);
+  
+//     const res = await superagent.get(`https://dog.ceo/api/breed/${data}/images/random`);
+//     console.log(res.body.message);
+  
+//     await writeFilePromise('dog-img.txt', res.body.message);
+//     console.log('Random dog image saved to file !');
+//   }
+//   catch (err) {
+//     console.error(err);
+//   }
+//   return '2: READY 🐕'
+// };
+
+// *****************************
+// ** Solution avec ".then()" **
+// *****************************
+// console.log('1: Will get 🐶 pics !');               // affiché en 1er
+// getDogPic()                                         // affiché en 2eme (les 3 console.log de la fonction)
+//   .then((x) => {
+//     console.log(x);                                 // affiché en 3eme (le "2: READY 🐕")
+//     console.log('3: Done getting dog pics 👀 !');  // affiché en 4eme
+//   })
+//   .catch((err) => {                                 // même en rajoutant un catch ici, si erreur, le code continue
+//     console.log('Error ! 💩');
+//   });
+
+// ***********************
+// ** Donne ce resultat **
+// ***********************
+// 1: Will get 🐶 pics !
+// The breed is (got from the file) : « labrador »
+// https://images.dog.ceo/breeds/labrador/n02099712_2332.jpg
+// Random dog image saved to file !
+// 2: READY 🐕
+// 3: Done getting dog pics 👀 !
+
+// ***********************
+// ** Donne ce resultat **
+// ***    SI ERREUR    ***
+// ***********************
+// 1: Will get 🐶 pics !
+// I couldn't find that file ! 😢     // erreur est bien signalé ici, mais le code continue -- même en ayant rajouté un catch
+// 2: READY 🐕
+// 3: Done getting dog pics 👀 !
+// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//                                      ********************
+//                                      *** 3eme exemple ***
+//                                      ********************
+//                                      * gestion d'erreur *
+//                                      ********************
+
+// const getDogPic = async () => {
+//   try {
+//     const data = await readFilePromise(`${__dirname}/doggg.txt`);
+//     console.log(`The breed is (got from the file) : « ${data} »`);
+  
+//     const res = await superagent.get(`https://dog.ceo/api/breed/${data}/images/random`);
+//     console.log(res.body.message);
+  
+//     await writeFilePromise('dog-img.txt', res.body.message);
+//     console.log('Random dog image saved to file !');
+//   }
+//   catch (err) {
+//     console.error(err);                      // On console.log l'erreur
+//     throw err;                               // et ici, on rejète la promesse, pour arrêter le code/la fonction
+//   }
+//   return '2: READY 🐕'
+// };
+
+// *****************************
+// ** Solution avec ".then()" **
+// *****************************
+// console.log('1: Will get 🐶 pics !');               // affiché en 1er
+// getDogPic()                                         // affiché en 2eme (les 3 console.log de la fonction)
+//   .then((x) => {
+//     console.log(x);                                 // affiché en 3eme (le "2: READY 🐕")
+//     console.log('3: Done getting dog pics 👀 !');  // affiché en 4eme
+//   })
+//   .catch((err) => {
+//     console.log('Error ! 💩');
+//   });
+
+// ***********************
+// ** Donne ce resultat **
+// ***    SI ERREUR    ***
+// ***********************
+// 1: Will get 🐶 pics !
+// I couldn't find that file ! 😢       // erreur est signalé 
+// Error ! 💩                           // et on a bien arrêté le code
+// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//                                      ********************
+//                                      *** 4eme exemple ***
+//                                      ********************
+//                                      * gestion d'erreur *
+//                                      ********************
+
 const getDogPic = async () => {
-  // NOTE : on ne pourra pas attacher de "catch" pour la gestion d'erreur si on ne fait pas un "try" d'abord
   try {
-    // On met le resultat dans une variable
-    // le "await" stop le code ici jusqu'à ce que la promesse soit résolue
-    // Si elle est "fulfilled" (succès), la valeur de l'expression await est celle de la promesse résolue
-    // cela correspond à « readFilePromise(`${__dirname}/dog.txt`).then(data => { console.log... »
     const data = await readFilePromise(`${__dirname}/dog.txt`);
     console.log(`The breed is (got from the file) : « ${data} »`);
   
-    // idem
     const res = await superagent.get(`https://dog.ceo/api/breed/${data}/images/random`);
     console.log(res.body.message);
   
-    // idem
-    // Pas besoin de variable, car on a pas de valeur significative à resoudre
     await writeFilePromise('dog-img.txt', res.body.message);
     console.log('Random dog image saved to file !');
-    
-  } catch (err) {
-    console.error(err);
   }
+  catch (err) {
+    console.error(err);
+    throw err;                               // Ici, on stop la promesse en cas d'erreur, pour arrêter la fonction
+  }
+  return '2: READY 🐕'
 };
 
-getDogPic();
+// // *****************************
+// // * Solution avec asyn/await  *
+// // *****************************
+// // *****************************************************
+// // *** IIFE = Immediately Invoked Functon Expression ***
+// // *****************************************************
+// On définit notre fonction avec des parenthèses
+// (On la déclare "async" pour utiliser "await")
+(async () => {
+  try {
+    console.log('1: Will get 🐶 pics !');
+    // On délare une variable et on await la promesse (getDogPic)
+    const x = await getDogPic();
+    console.log(x);
+    console.log('3: Done getting dog pics 👀 !');
+    // Même si on n'utilise pas "err" on est obligé de le mettre ici
+  } catch (err) {
+    console.log('Error ! 💩');
+  }
+// et on l'appelle aussitôt (avec des parenthèses)
+})();
+
+// ***********************
+// ** Donne ce resultat **
+// ***********************
+// 1: Will get 🐶 pics !
+// The breed is (got from the file) : « labrador »
+// https://images.dog.ceo/breeds/labrador/n02099712_6664.jpg
+// Random dog image saved to file !
+// 2: READY 🐕
+// 3: Done getting dog pics 👀 !
+
+// ***********************
+// ** Donne ce resultat **
+// ***    SI ERREUR    ***
+// ***********************
+// 1: Will get 🐶 pics !
+// I couldn't find that file ! 😢       // erreur est signalé 
+// Error ! 💩                           // et on a bien arrêté le code
+// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
