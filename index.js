@@ -360,23 +360,23 @@ const writeFilePromise = (file, data) => {
 //                                      * gestion d'erreur *
 //                                      ********************
 
-const getDogPic = async () => {
-  try {
-    const data = await readFilePromise(`${__dirname}/dog.txt`);
-    console.log(`The breed is (got from the file) : « ${data} »`);
+// const getDogPic = async () => {
+//   try {
+//     const data = await readFilePromise(`${__dirname}/dog.txt`);
+//     console.log(`The breed is (got from the file) : « ${data} »`);
   
-    const res = await superagent.get(`https://dog.ceo/api/breed/${data}/images/random`);
-    console.log(res.body.message);
+//     const res = await superagent.get(`https://dog.ceo/api/breed/${data}/images/random`);
+//     console.log(res.body.message);
   
-    await writeFilePromise('dog-img.txt', res.body.message);
-    console.log('Random dog image saved to file !');
-  }
-  catch (err) {
-    console.error(err);
-    throw err;                               // Ici, on stop la promesse en cas d'erreur, pour arrêter la fonction
-  }
-  return '2: READY 🐕'
-};
+//     await writeFilePromise('dog-img.txt', res.body.message);
+//     console.log('Random dog image saved to file !');
+//   }
+//   catch (err) {
+//     console.error(err);
+//     throw err;                               // Ici, on stop la promesse en cas d'erreur, pour arrêter la fonction
+//   }
+//   return '2: READY 🐕'
+// };
 
 // // *****************************
 // // * Solution avec asyn/await  *
@@ -386,19 +386,19 @@ const getDogPic = async () => {
 // // *****************************************************
 // On définit notre fonction avec des parenthèses
 // (On la déclare "async" pour utiliser "await")
-(async () => {
-  try {
-    console.log('1: Will get 🐶 pics !');
-    // On délare une variable et on await la promesse (getDogPic)
-    const x = await getDogPic();
-    console.log(x);
-    console.log('3: Done getting dog pics 👀 !');
-    // Même si on n'utilise pas "err" on est obligé de le mettre ici
-  } catch (err) {
-    console.log('Error ! 💩');
-  }
-// et on l'appelle aussitôt (avec des parenthèses)
-})();
+// (async () => {
+//   try {
+//     console.log('1: Will get 🐶 pics !');
+//     // On délare une variable et on await la promesse (getDogPic)
+//     const x = await getDogPic();
+//     console.log(x);
+//     console.log('3: Done getting dog pics 👀 !');
+//     // Même si on n'utilise pas "err" on est obligé de le mettre ici
+//   } catch (err) {
+//     console.log('Error ! 💩');
+//   }
+// // et on l'appelle aussitôt (avec des parenthèses)
+// })();
 
 // ***********************
 // ** Donne ce resultat **
@@ -418,3 +418,56 @@ const getDogPic = async () => {
 // I couldn't find that file ! 😢       // erreur est signalé 
 // Error ! 💩                           // et on a bien arrêté le code
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+// ******************************************************************************************
+// ***********                   MULTI PROMISES SIMULTANEOUSLY                    ***********
+// ******************************************************************************************
+
+const getDogPic = async () => {
+  try {
+    const data = await readFilePromise(`${__dirname}/dog.txt`);
+    console.log(`The breed is (got from the file) : « ${data} »`);
+  
+    // Comment chercher 3 images de l'API ?
+    // si on await les appels API les uns après les autres
+    // (le deuxième doit attendre le premier, le troisème attendre le 2eme ....)
+    // ce n'est pas une bonne solution. Le mieux est de les lancer les promesses en simultané
+    // Donc on ne fait pas de 'await' ici, mais on sauvegarde la promesse dans une variable
+    // AVANT : const res = await superagent.get(`https://dog.ceo/api/breed/${data}/images/random`);
+    // DEVIENT : const res1Promise = superagent.get(`https://dog.ceo/api/breed/${data}/images/random`);
+    // C'est la promesse, pas la valeur de la promesse résolue dans "res1Promise"
+    const res1Promise = superagent.get(`https://dog.ceo/api/breed/${data}/images/random`);
+    const res2Promise = superagent.get(`https://dog.ceo/api/breed/${data}/images/random`);
+    const res3Promise = superagent.get(`https://dog.ceo/api/breed/${data}/images/random`);
+    // Maintenant pour avoir les valeurs resolues (les 3 images), on crée une variable
+    // et on les await avec "promise.all" et un tableau qui contient les promesses
+    // cela va lancer les promesses en même temps et sauvegarder leurs valeurs une fois résolues
+    const all = await Promise.all([res1Promise, res2Promise, res3Promise]);
+    // console.log('all => ', all); // tableau énorme (http méthod, request, event etc....)
+    // avec ".map()" on crée un tableau avec juste le "res.body.message"
+    const images = all.map(el => el.body.message);
+    console.log('images => ', images);
+
+    // avec ".join()" on transforme le tableau en chaîne de caractère, 
+    // et on sépare avec une nouvelle ligne ("\n")
+    await writeFilePromise('dog-img.txt', images.join("\n"));
+    console.log('Random dogs image saved to file !');
+  }
+  catch (err) {
+    console.error(err);
+    throw err;
+  }
+  return '2: READY 🐕'
+};
+
+(async () => {
+  try {
+    console.log('1: Will get 🐶 pics !');
+    const x = await getDogPic();
+    console.log(x);
+    console.log('3: Done getting dog pics 👀 !');
+  } catch (err) {
+    console.log('Error ! 💩');
+  }
+})();
